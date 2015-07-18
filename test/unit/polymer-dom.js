@@ -531,7 +531,7 @@ suite('Polymer.dom', function() {
   test('Polymer.dom importNode shallow', function() {
     var a = document.createElement('div');
     a.innerHTML = '<x-clonate><span>1</span><span>2</span></x-clonate>';
-    var b = Polymer.dom(document).importNode(Polymer.dom(a).firstElementChild);
+    var b = Polymer.dom(wrap(document)).importNode(Polymer.dom(a).firstElementChild);
     Polymer.dom(document.body).appendChild(b);
     assert.equal(Polymer.dom(b).childNodes.length, 0, 'shallow import has incorrect children');
     if (b.shadyRoot) {
@@ -542,7 +542,7 @@ suite('Polymer.dom', function() {
   test('Polymer.dom importNode deep', function() {
     var a = document.createElement('div');
     a.innerHTML = '<x-clonate><span>1</span><span>2</span></x-clonate>';
-    var b = Polymer.dom(document).importNode(a, true);
+    var b = Polymer.dom(wrap(document)).importNode(a, true);
     Polymer.dom(document.body).appendChild(b);
     assert.equal(Polymer.dom(b.firstElementChild).childNodes.length, 2, 'deep copy has incorrect children');
     if (b.shadyRoot) {
@@ -630,6 +630,18 @@ suite('Polymer.dom accessors', function() {
       Polymer.dom.flush();
       assert.equal(testElement._composedChildren[1].textContent, 'Hello World', 'text content setter incorrect');
     }
+    testElement = document.createElement('x-commented');
+    assert.equal(Polymer.dom(testElement.root).textContent, '[]', 'text content getter with comment incorrect');
+
+    var textNode = document.createTextNode('foo');
+    assert.equal(Polymer.dom(textNode).textContent, 'foo', 'text content getter on textnode incorrect');
+    Polymer.dom(textNode).textContent = 'bar';
+    assert.equal(textNode.textContent, 'bar', 'text content setter on textnode incorrect');
+
+    var commentNode = document.createComment('foo');
+    assert.equal(Polymer.dom(commentNode).textContent, 'foo', 'text content getter on commentnode incorrect');
+    Polymer.dom(commentNode).textContent = 'bar';
+    assert.equal(commentNode.textContent, 'bar', 'text content setter on commentnode incorrect');
   });
 
   test('Polymer.dom innerHTML', function() {
@@ -809,5 +821,15 @@ suite('Polymer.dom non-distributed elements', function() {
     assert.equal(Polymer.dom(test).getOwnerRoot(), c2.root, 'getOwnerRoot not correctly reset when element moved to different root');
     Polymer.dom(c1).appendChild(test);
     assert.notOk(Polymer.dom(test).getOwnerRoot(), 'getOwnerRoot incorrect for child moved from a root to no root');
+  });
+
+  test('getDistributedNodes on non-content element', function() {
+    assert.equal(Polymer.dom(document.createElement('div')).getDistributedNodes().length, 0);
+        assert.equal(Polymer.dom().getDistributedNodes().length, 0);
+  });
+
+  test('getDestinationInsertionPoints on non-distributable element', function() {
+    assert.equal(Polymer.dom(document.createElement('div')).getDestinationInsertionPoints().length, 0);
+    assert.equal(Polymer.dom(document).getDestinationInsertionPoints().length, 0);
   });
 });
